@@ -5,10 +5,10 @@
 ## ⚡ Быстрая установка (одна команда)
 
 ```bash
-sudo yum install git python3 -y && \
-git clone https://github.com/Bkmz991/Prox.git && \
-cd Prox && \
-python3 setup.py
+sudo dnf install git python3 -y && \
+git clone https://github.com/Bkmz991/Prox-IPv6.git && \
+cd Prox-IPv6 && \
+sudo python3 setup.py
 ```
 
 **Требования:** CentOS/RHEL/Rocky Linux с IPv6 подсетью /64 или больше
