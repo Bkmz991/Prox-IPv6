@@ -124,7 +124,7 @@ timeouts 1 5 30 60 180 1800 15 60
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
 auth strong
-allow $(awk -F "/" 'BEGIN{ORS=",";} {print $1}' ${WORKDATA} | sed 's/,$//')
+allow $USERNAME
 $(awk -F "/" '{print "proxy -64 -n -m1460 -a -p" $4 " -i" $3 " -e" $5}' ${WORKDATA})
 $(awk -F "/" '{print "socks -64 -n -m1460 -a -p" $4+20000 " -i" $3 " -e" $5}' ${WORKDATA})
 EOF
@@ -189,10 +189,11 @@ Description=3proxy Proxy Server
 After=network.target
 
 [Service]
-Type=simple
+Type=forking
 ExecStartPre=${WORKDIR}/up_ips.sh
 ExecStart=/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 Restart=always
+TimeoutStartSec=300
 
 [Install]
 WantedBy=multi-user.target
