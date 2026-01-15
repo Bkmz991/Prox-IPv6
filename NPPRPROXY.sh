@@ -116,13 +116,17 @@ EOF
 
 gen_3proxy() {
     cat <<EOF
-daemon
 nserver 8.8.8.8
 nserver 1.1.1.1
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
-users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
+stack 128
+EOF
 
+    # Добавляем пользователей по одному, чтобы избежать проблем с длиной строки
+    awk -F "/" '{print "users " $1 ":CL:" $2}' ${WORKDATA}
+
+    cat <<EOF
 auth strong
 allow $USERNAME
 $(awk -F "/" '{print "proxy -64 -n -m1460 -a -p" $4 " -i" $3 " -e" $5}' ${WORKDATA})
@@ -189,11 +193,12 @@ Description=3proxy Proxy Server
 After=network.target
 
 [Service]
-Type=forking
+Type=simple
+LimitNOFILE=1000000
+LimitNPROC=infinity
 ExecStartPre=${WORKDIR}/up_ips.sh
 ExecStart=/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 Restart=always
-TimeoutStartSec=300
 
 [Install]
 WantedBy=multi-user.target
