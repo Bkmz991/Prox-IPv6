@@ -146,9 +146,19 @@ mkdir -p $WORKDIR && cd $WORKDIR
 
 ipv6_info=$(auto_detect_ipv6_info)
 if [ $? -eq 0 ]; then
-    read IP6_PREFIX IP6_SIZE <<< "$ipv6_info"
+    read DETECTED_IP6_PREFIX IP6_SIZE <<< "$ipv6_info"
 else
-    echo -e "${RED}Error: Could not detect IPv6 prefix.${NC}"
+    DETECTED_IP6_PREFIX=""
+fi
+
+echo -e "${GREEN}------------------------------------------------${NC}"
+echo -e "ВАЖНО ДЛЯ LINODE: Используйте 'Range - IPv6' из панели (например, 2600:3c02:e000:07ae)"
+echo -ne "Введите IPv6 префикс (по умолчанию ${DETECTED_IP6_PREFIX}): "
+read IP6_PREFIX
+IP6_PREFIX=${IP6_PREFIX:-$DETECTED_IP6_PREFIX}
+
+if [ -z "$IP6_PREFIX" ]; then
+    echo -e "${RED}Error: IPv6 prefix cannot be empty.${NC}"
     exit 1
 fi
 
