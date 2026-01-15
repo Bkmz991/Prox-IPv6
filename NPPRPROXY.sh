@@ -116,6 +116,7 @@ EOF
 
 gen_3proxy() {
     cat <<EOF
+daemon
 nserver 8.8.8.8
 nserver 1.1.1.1
 nscache 65536
@@ -139,6 +140,7 @@ stop_progress_bar
 install_3proxy
 
 WORKDIR="/home/proxy-installer"
+BINDIR="/usr/local/etc/3proxy/bin"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir -p $WORKDIR && cd $WORKDIR
 
@@ -166,8 +168,8 @@ $(for i in $(seq 1 $COUNT); do
 done)
 EOF
 
-# Скрипт поднятия IP
-cat > ${WORKDIR}/up_ips.sh <<EOF
+# Скрипт поднятия IP (сохраняем в bin для надежности)
+cat > ${BINDIR}/up_ips.sh <<EOF
 #!/bin/bash
 while read line; do
   ip=\$(echo \$line | cut -d'/' -f5)
@@ -175,8 +177,8 @@ while read line; do
 done < ${WORKDATA}
 exit 0
 EOF
-chmod +x ${WORKDIR}/up_ips.sh
-sudo ${WORKDIR}/up_ips.sh
+chmod +x ${BINDIR}/up_ips.sh
+sudo ${BINDIR}/up_ips.sh
 
 # Конфиг 3proxy
 gen_3proxy > /usr/local/etc/3proxy/3proxy.cfg
@@ -188,32 +190,23 @@ Description=3proxy Proxy Server
 After=network.target
 
 [Service]
-Type=simple
+Type=forking
 LimitNOFILE=1000000
 LimitNPROC=infinity
-ExecStartPre=${WORKDIR}/up_ips.sh
+ExecStartPre=${BINDIR}/up_ips.sh
 ExecStart=/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 Restart=always
+TimeoutStartSec=300
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
+echo "Cleaning up old processes and starting service..."
+sudo pkill -9 3proxy >/dev/null 2>&1
 sudo systemctl daemon-reload
 sudo systemctl enable 3proxy
-
-echo "Checking config and starting..."
-# Проверка запуска
-/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
-SLEEP_PID=$!
-sleep 2
-if ps -p $SLEEP_PID > /dev/null; then
-    echo "3proxy started successfully in background."
-    kill $SLEEP_PID
-    sudo systemctl restart 3proxy
-else
-    echo "3proxy failed to start. Check /usr/local/etc/3proxy/3proxy.cfg"
-fi
+sudo systemctl restart 3proxy
 
 # Формирование proxy.txt
 cat > proxy.txt <<EOF
