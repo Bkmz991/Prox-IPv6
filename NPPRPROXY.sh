@@ -120,13 +120,8 @@ nserver 8.8.8.8
 nserver 1.1.1.1
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
-stack 128
-EOF
+users $USERNAME:CL:$PASSWORD
 
-    # Добавляем пользователей по одному, чтобы избежать проблем с длиной строки
-    awk -F "/" '{print "users " $1 ":CL:" $2}' ${WORKDATA}
-
-    cat <<EOF
 auth strong
 allow $USERNAME
 $(awk -F "/" '{print "proxy -64 -n -m1460 -a -p" $4 " -i" $3 " -e" $5}' ${WORKDATA})
@@ -206,7 +201,19 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable 3proxy
-sudo systemctl restart 3proxy
+
+echo "Checking config and starting..."
+# Проверка запуска
+/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
+SLEEP_PID=$!
+sleep 2
+if ps -p $SLEEP_PID > /dev/null; then
+    echo "3proxy started successfully in background."
+    kill $SLEEP_PID
+    sudo systemctl restart 3proxy
+else
+    echo "3proxy failed to start. Check /usr/local/etc/3proxy/3proxy.cfg"
+fi
 
 # Формирование proxy.txt
 cat > proxy.txt <<EOF
