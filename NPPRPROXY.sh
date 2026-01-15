@@ -172,8 +172,9 @@ cat > ${WORKDIR}/up_ips.sh <<EOF
 #!/bin/bash
 while read line; do
   ip=\$(echo \$line | cut -d'/' -f5)
-  ip -6 addr add \$ip/64 dev $main_interface >/dev/null 2>&1
+  ip -6 addr add \$ip/64 dev $main_interface >/dev/null 2>&1 || true
 done < ${WORKDATA}
+exit 0
 EOF
 chmod +x ${WORKDIR}/up_ips.sh
 sudo ${WORKDIR}/up_ips.sh
